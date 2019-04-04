@@ -131,5 +131,11 @@ def main():
     # Get dominant topic for each document
     dominant_topic = np.argmax(df_document_topic.values, axis=1)
     df_document_topic['dominant_topic'] = dominant_topic
-    
+
+    # Topic Distribution Table
+    df_topic_distribution = df_document_topic['dominant_topic'].value_counts(
+    ).reset_index(name="Num Documents")
+    df_topic_distribution.columns = ['Topic Num', 'Num Documents']
+    print (df_topic_distribution)
+
 main()
