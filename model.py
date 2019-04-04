@@ -163,4 +163,9 @@ def main():
         str(i) for i in range(
             df_topic_top_keywords.shape[0])]
     print (df_topic_top_keywords)
+
+    # Exporting Model
+    file_name = 'lda_model'
+    pickle.dump(best_lda_model, open(file_name, 'w'))
+    
 main()
