@@ -111,5 +111,25 @@ def main():
 
     # log likelihood score
     print("Best Log Likelihood Score: ", gsc.best_score_)
+
+    # Document-Topic Matrix
+    lda_output = best_lda_model.transform(data_vectorized)
+    # column names
+    topic_names = [
+        "Topic" +
+        str(i) for i in range(
+            gsc.best_params_.get('n_components'))]
+    # index names
+    doc_names = ["Doc" + str(i) for i in range(len(processed_docs))]
+    # make the pandas dataframe
+    df_document_topic = pd.DataFrame(
+        np.round(
+            lda_output,
+            2),
+        index=doc_names,
+        columns=topic_names)
+    # Get dominant topic for each document
+    dominant_topic = np.argmax(df_document_topic.values, axis=1)
+    df_document_topic['dominant_topic'] = dominant_topic
     
 main()
