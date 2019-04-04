@@ -36,6 +36,11 @@ def main():
     # list down all files in folder
     data_list = os.listdir("data")
 
+    # Handle if no file in data folder
+    if len(data_list) == 0:
+        print ('no file')
+        return
+
     # defining dataframe for tweets
     col_names =  ['id','date','tweet']
     data_df = pd.DataFrame(columns = col_names)
