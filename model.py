@@ -75,4 +75,41 @@ def main():
     data_df = prep(data_df)
     print (data_df)
 
+    processed_docs = []
+    for text in list(data_df['tweet']):
+        doc = " ".join(text)
+        processed_docs.append(doc)
+
+    vectorizer = CountVectorizer(analyzer='word',
+                                 # minimum reqd occurences of a word
+                                 min_df=12,
+                                 stop_words='english',
+                                 lowercase=True,
+                                 # num chars > 3
+                                 token_pattern='[a-zA-Z0-9]{2,}',
+                                 )
+
+    data_vectorized = vectorizer.fit_transform(processed_docs)
+
+    # various search params to get best combination
+    # n_components is Number of topics.
+    search_params = {'n_components': [
+        10, 15, 20, 30, 50], 'learning_decay': [.4, .8, .12]}
+
+    # gridsearch to find best parameters
+    gsc = GridSearchCV(
+        estimator=LatentDirichletAllocation(),
+        param_grid=search_params,
+        cv=5,
+        error_score='numeric')
+    gsc.fit(data_vectorized)
+
+    best_lda_model = gsc.best_estimator_
+
+    # model parameters
+    print("Best Params: ", gsc.best_params_)
+
+    # log likelihood score
+    print("Best Log Likelihood Score: ", gsc.best_score_)
+    
 main()
