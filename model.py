@@ -138,4 +138,11 @@ def main():
     df_topic_distribution.columns = ['Topic Num', 'Num Documents']
     print (df_topic_distribution)
 
+    # Topic-Keyword Matrix
+    df_topic_keywords = pd.DataFrame(
+        best_lda_model.components_,
+        index=topic_names,
+        columns=vectorizer.get_feature_names())
+    print (df_topic_keywords.head())
+
 main()
