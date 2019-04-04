@@ -145,4 +145,22 @@ def main():
         columns=vectorizer.get_feature_names())
     print (df_topic_keywords.head())
 
+    # Top 10 keywords for each topic
+    keywords = np.array(vectorizer.get_feature_names())
+    topic_keywords = []
+    for topic_weights in best_lda_model.components_:
+        top_keyword_locs = (-topic_weights).argsort()[:10]
+        topic_keywords.append(keywords.take(top_keyword_locs))
+
+    # Topic - Top 10 Keywords Dataframe
+    df_topic_top_keywords = pd.DataFrame(topic_keywords)
+    df_topic_top_keywords.columns = [
+        'Word ' +
+        str(i) for i in range(
+            df_topic_top_keywords.shape[1])]
+    df_topic_top_keywords.index = [
+        'Topic ' +
+        str(i) for i in range(
+            df_topic_top_keywords.shape[0])]
+    print (df_topic_top_keywords)
 main()
