@@ -17,7 +17,7 @@ def main():
         4, 10, 20], 'learning_decay': [.8, .12]}
 
     for i in range(num_of_topics):
-        print ('Sub-Topic for Topic ' + str(i))
+        print 'Sub-Topic for Topic ' + str(i)
         filter_doc = doc_topic.loc[doc_topic['dominant_topic'] == i]
         processed_docs = list(filter_doc['doc'])
         [best_lda_model_sub_topic, num_of_sub_topics,

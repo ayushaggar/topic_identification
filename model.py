@@ -76,10 +76,10 @@ def train_lda(processed_docs, search_params):
     gsc.fit(data_vectorized)
 
     # model parameters
-    print("Best Params: ", gsc.best_params_)
+    print "Best Params: ", gsc.best_params_
 
     # log likelihood score
-    print("Best Log Likelihood Score: ", gsc.best_score_)
+    print "Best Log Likelihood Score: ", gsc.best_score_
 
     best_lda_model = gsc.best_estimator_
 
@@ -112,7 +112,7 @@ def show_result(best_lda_model, processed_docs, num_of_topics, vectorizer):
     df_topic_distribution = df_document_topic['dominant_topic'].value_counts(
     ).reset_index(name="Num Documents")
     df_topic_distribution.columns = ['Topic Num', 'Num Documents']
-    print (df_topic_distribution)
+    print df_topic_distribution
 
     # Topic-Keyword Matrix
     df_topic_keywords = pd.DataFrame(
@@ -137,7 +137,7 @@ def show_result(best_lda_model, processed_docs, num_of_topics, vectorizer):
         'Topic ' +
         str(i) for i in range(
             df_topic_top_keywords.shape[0])]
-    print (df_topic_top_keywords)
+    print df_topic_top_keywords
 
     return df_document_topic
 
@@ -148,7 +148,7 @@ def main(filter_keywords):
 
     # Handle if no file in data folder
     if len(data_list) == 0:
-        print ('no file')
+        print 'no file'
         return
 
     # defining dataframe for tweets
