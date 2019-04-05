@@ -45,15 +45,17 @@ def clean(doc):
 # removing link in tweet and change to lower case
 
 
-def prep(df):
+def prep(df, filter_keywords):
     df['tweet'] = df['tweet'].str.replace(r'http\S+|www.\S+', '', case=False)
     df['tweet'] = map(lambda x: x.lower(), df['tweet'])
+    if len(filter_keywords) != 0:
+        filter_keyword = "|".join(filter_keywords)
+        df  = df[df['tweet'].str.contains(filter_keyword)]
     df['tweet'] = df['tweet'].apply(lambda x: clean(x).split())
     return df
 
 
-def main():
-
+def main(filter_keywords):
     # list down all files in folder
     data_list = os.listdir("data")
 
@@ -72,7 +74,7 @@ def main():
 
     # cleaning
     data_df = data_df.drop(['id', 'date'], 1)
-    data_df = prep(data_df)
+    data_df = prep(data_df, filter_keywords)
     print (data_df)
 
     processed_docs = []
@@ -94,7 +96,7 @@ def main():
     # various search params to get best combination
     # n_components is Number of topics.
     search_params = {'n_components': [
-        10, 15, 20, 30, 50], 'learning_decay': [.4, .8, .12]}
+        10, 20], 'learning_decay': [.8, .12]}
 
     # gridsearch to find best parameters
     gsc = GridSearchCV(
@@ -168,4 +170,4 @@ def main():
     file_name = 'lda_model'
     pickle.dump(best_lda_model, open(file_name, 'w'))
 
-main()
+    return best_lda_model
