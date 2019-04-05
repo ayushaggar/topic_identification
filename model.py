@@ -50,9 +50,10 @@ def prep(df, filter_keywords):
     df['tweet'] = map(lambda x: x.lower(), df['tweet'])
     if len(filter_keywords) != 0:
         filter_keyword = "|".join(filter_keywords)
-        df  = df[df['tweet'].str.contains(filter_keyword)]
+        df = df[df['tweet'].str.contains(filter_keyword)]
     df['tweet'] = df['tweet'].apply(lambda x: clean(x).split())
     return df
+
 
 def train_lda(processed_docs, search_params):
     vectorizer = CountVectorizer(analyzer='word',
@@ -83,6 +84,7 @@ def train_lda(processed_docs, search_params):
     best_lda_model = gsc.best_estimator_
 
     return [best_lda_model, gsc.best_params_.get('n_components'), vectorizer]
+
 
 def show_result(best_lda_model, processed_docs, num_of_topics, vectorizer):
     # Document-Topic Matrix
@@ -139,6 +141,7 @@ def show_result(best_lda_model, processed_docs, num_of_topics, vectorizer):
 
     return df_document_topic
 
+
 def main(filter_keywords):
     # list down all files in folder
     data_list = os.listdir("data")
@@ -171,9 +174,14 @@ def main(filter_keywords):
     search_params = {'n_components': [
         6, 10, 20], 'learning_decay': [.8, .12]}
 
-    [best_lda_model, num_of_topics, vectorizer] = train_lda(processed_docs, search_params)
-    
-    df_document_topic = show_result(best_lda_model, processed_docs, num_of_topics, vectorizer)
+    [best_lda_model, num_of_topics, vectorizer] = train_lda(
+        processed_docs, search_params)
+
+    df_document_topic = show_result(
+        best_lda_model,
+        processed_docs,
+        num_of_topics,
+        vectorizer)
 
     # Exporting Model
     file_name = 'lda_model'
