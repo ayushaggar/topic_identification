@@ -54,6 +54,90 @@ def prep(df, filter_keywords):
     df['tweet'] = df['tweet'].apply(lambda x: clean(x).split())
     return df
 
+def train_lda(processed_docs, search_params):
+    vectorizer = CountVectorizer(analyzer='word',
+                                 # minimum reqd occurences of a word
+                                 min_df=12,
+                                 stop_words='english',
+                                 lowercase=True,
+                                 # num chars > 3
+                                 token_pattern='[a-zA-Z0-9]{2,}',
+                                 )
+
+    data_vectorized = vectorizer.fit_transform(processed_docs)
+
+    # gridsearch to find best parameters
+    gsc = GridSearchCV(
+        estimator=LatentDirichletAllocation(),
+        param_grid=search_params,
+        cv=5,
+        error_score='numeric')
+    gsc.fit(data_vectorized)
+
+    # model parameters
+    print("Best Params: ", gsc.best_params_)
+
+    # log likelihood score
+    print("Best Log Likelihood Score: ", gsc.best_score_)
+
+    best_lda_model = gsc.best_estimator_
+
+    return [best_lda_model, gsc.best_params_.get('n_components'), vectorizer]
+
+def show_result(best_lda_model, processed_docs, num_of_topics, vectorizer):
+    # Document-Topic Matrix
+    data_vectorized = vectorizer.fit_transform(processed_docs)
+    lda_output = best_lda_model.transform(data_vectorized)
+    # column names
+    topic_names = [
+        "Topic" +
+        str(i) for i in range(num_of_topics)]
+    # index names
+    doc_names = ["Doc" + str(i) for i in range(len(processed_docs))]
+    # make the pandas dataframe
+    df_document_topic = pd.DataFrame(
+        np.round(
+            lda_output,
+            2),
+        index=doc_names,
+        columns=topic_names)
+    # Get dominant topic for each document
+    dominant_topic = np.argmax(df_document_topic.values, axis=1)
+    df_document_topic['dominant_topic'] = dominant_topic
+    df_document_topic['doc'] = processed_docs
+
+    # Topic Distribution Table
+    df_topic_distribution = df_document_topic['dominant_topic'].value_counts(
+    ).reset_index(name="Num Documents")
+    df_topic_distribution.columns = ['Topic Num', 'Num Documents']
+    print (df_topic_distribution)
+
+    # Topic-Keyword Matrix
+    df_topic_keywords = pd.DataFrame(
+        best_lda_model.components_,
+        index=topic_names,
+        columns=vectorizer.get_feature_names())
+
+    # Top 10 keywords for each topic
+    keywords = np.array(vectorizer.get_feature_names())
+    topic_keywords = []
+    for topic_weights in best_lda_model.components_:
+        top_keyword_locs = (-topic_weights).argsort()[:10]
+        topic_keywords.append(keywords.take(top_keyword_locs))
+
+    # Topic - Top 10 Keywords Dataframe
+    df_topic_top_keywords = pd.DataFrame(topic_keywords)
+    df_topic_top_keywords.columns = [
+        'Word ' +
+        str(i) for i in range(
+            df_topic_top_keywords.shape[1])]
+    df_topic_top_keywords.index = [
+        'Topic ' +
+        str(i) for i in range(
+            df_topic_top_keywords.shape[0])]
+    print (df_topic_top_keywords)
+
+    return df_document_topic
 
 def main(filter_keywords):
     # list down all files in folder
@@ -75,99 +159,24 @@ def main(filter_keywords):
     # cleaning
     data_df = data_df.drop(['id', 'date'], 1)
     data_df = prep(data_df, filter_keywords)
-    print (data_df)
 
+    data_docs = list(data_df['tweet'])
     processed_docs = []
-    for text in list(data_df['tweet']):
+    for text in data_docs:
         doc = " ".join(text)
         processed_docs.append(doc)
-
-    vectorizer = CountVectorizer(analyzer='word',
-                                 # minimum reqd occurences of a word
-                                 min_df=12,
-                                 stop_words='english',
-                                 lowercase=True,
-                                 # num chars > 3
-                                 token_pattern='[a-zA-Z0-9]{2,}',
-                                 )
-
-    data_vectorized = vectorizer.fit_transform(processed_docs)
 
     # various search params to get best combination
     # n_components is Number of topics.
     search_params = {'n_components': [
-        10, 20], 'learning_decay': [.8, .12]}
+        6, 10, 20], 'learning_decay': [.8, .12]}
 
-    # gridsearch to find best parameters
-    gsc = GridSearchCV(
-        estimator=LatentDirichletAllocation(),
-        param_grid=search_params,
-        cv=5,
-        error_score='numeric')
-    gsc.fit(data_vectorized)
-
-    best_lda_model = gsc.best_estimator_
-
-    # model parameters
-    print("Best Params: ", gsc.best_params_)
-
-    # log likelihood score
-    print("Best Log Likelihood Score: ", gsc.best_score_)
-
-    # Document-Topic Matrix
-    lda_output = best_lda_model.transform(data_vectorized)
-    # column names
-    topic_names = [
-        "Topic" +
-        str(i) for i in range(
-            gsc.best_params_.get('n_components'))]
-    # index names
-    doc_names = ["Doc" + str(i) for i in range(len(processed_docs))]
-    # make the pandas dataframe
-    df_document_topic = pd.DataFrame(
-        np.round(
-            lda_output,
-            2),
-        index=doc_names,
-        columns=topic_names)
-    # Get dominant topic for each document
-    dominant_topic = np.argmax(df_document_topic.values, axis=1)
-    df_document_topic['dominant_topic'] = dominant_topic
-
-    # Topic Distribution Table
-    df_topic_distribution = df_document_topic['dominant_topic'].value_counts(
-    ).reset_index(name="Num Documents")
-    df_topic_distribution.columns = ['Topic Num', 'Num Documents']
-    print (df_topic_distribution)
-
-    # Topic-Keyword Matrix
-    df_topic_keywords = pd.DataFrame(
-        best_lda_model.components_,
-        index=topic_names,
-        columns=vectorizer.get_feature_names())
-    print (df_topic_keywords.head())
-
-    # Top 10 keywords for each topic
-    keywords = np.array(vectorizer.get_feature_names())
-    topic_keywords = []
-    for topic_weights in best_lda_model.components_:
-        top_keyword_locs = (-topic_weights).argsort()[:10]
-        topic_keywords.append(keywords.take(top_keyword_locs))
-
-    # Topic - Top 10 Keywords Dataframe
-    df_topic_top_keywords = pd.DataFrame(topic_keywords)
-    df_topic_top_keywords.columns = [
-        'Word ' +
-        str(i) for i in range(
-            df_topic_top_keywords.shape[1])]
-    df_topic_top_keywords.index = [
-        'Topic ' +
-        str(i) for i in range(
-            df_topic_top_keywords.shape[0])]
-    print (df_topic_top_keywords)
+    [best_lda_model, num_of_topics, vectorizer] = train_lda(processed_docs, search_params)
+    
+    df_document_topic = show_result(best_lda_model, processed_docs, num_of_topics, vectorizer)
 
     # Exporting Model
     file_name = 'lda_model'
     pickle.dump(best_lda_model, open(file_name, 'w'))
 
-    return best_lda_model
+    return [df_document_topic, num_of_topics]
