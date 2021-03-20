@@ -15,7 +15,7 @@ future==0.17.1
 futures==3.2.0
 gensim==3.7.1
 idna==2.8
-Jinja2==2.10
+Jinja2==2.11.3
 jmespath==0.9.4
 joblib==0.13.2
 kiwisolver==1.0.1
